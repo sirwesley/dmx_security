@@ -23,6 +23,7 @@ namespace CppWinForm1 {
 		{
 			InitializeComponent();
 			dmx.FTDI_connect();
+			attemptNumber = 0;
 			//
 			//TODO: Add the constructor code here
 			//
@@ -42,8 +43,10 @@ namespace CppWinForm1 {
 	private: System::Windows::Forms::TextBox^  tbCode;
 	private: System::Windows::Forms::Label^  Armed_Label;
 	private: DMXDriver dmx;
+	private: int attemptNumber;
 	protected:
 	private: System::Windows::Forms::Button^  button1;
+	private: System::Windows::Forms::Label^  hint_label;
 	private:
 		/// <summary>
 		/// Required designer variable.
@@ -60,6 +63,7 @@ namespace CppWinForm1 {
 			this->tbCode = (gcnew System::Windows::Forms::TextBox());
 			this->button1 = (gcnew System::Windows::Forms::Button());
 			this->Armed_Label = (gcnew System::Windows::Forms::Label());
+			this->hint_label = (gcnew System::Windows::Forms::Label());
 			this->SuspendLayout();
 			// 
 			// tbCode
@@ -67,18 +71,19 @@ namespace CppWinForm1 {
 			this->tbCode->Anchor = System::Windows::Forms::AnchorStyles::Top;
 			this->tbCode->Font = (gcnew System::Drawing::Font(L"Microsoft Sans Serif", 36, System::Drawing::FontStyle::Bold, System::Drawing::GraphicsUnit::Point,
 				static_cast<System::Byte>(0)));
-			this->tbCode->Location = System::Drawing::Point(344, 190);
+			this->tbCode->Location = System::Drawing::Point(354, 242);
 			this->tbCode->Name = L"tbCode";
 			this->tbCode->Size = System::Drawing::Size(186, 62);
 			this->tbCode->TabIndex = 0;
 			this->tbCode->TextAlign = System::Windows::Forms::HorizontalAlignment::Center;
+			this->tbCode->KeyDown += gcnew System::Windows::Forms::KeyEventHandler(this, &MyForm::tbCode_KeyDown);
 			// 
 			// button1
 			// 
 			this->button1->Anchor = System::Windows::Forms::AnchorStyles::Top;
 			this->button1->Font = (gcnew System::Drawing::Font(L"Microsoft Sans Serif", 27.75F, System::Drawing::FontStyle::Regular, System::Drawing::GraphicsUnit::Point,
 				static_cast<System::Byte>(0)));
-			this->button1->Location = System::Drawing::Point(344, 269);
+			this->button1->Location = System::Drawing::Point(354, 331);
 			this->button1->Name = L"button1";
 			this->button1->Size = System::Drawing::Size(186, 51);
 			this->button1->TabIndex = 1;
@@ -93,7 +98,7 @@ namespace CppWinForm1 {
 			this->Armed_Label->Font = (gcnew System::Drawing::Font(L"Microsoft Sans Serif", 48, System::Drawing::FontStyle::Bold, System::Drawing::GraphicsUnit::Point,
 				static_cast<System::Byte>(0)));
 			this->Armed_Label->ForeColor = System::Drawing::Color::Red;
-			this->Armed_Label->Location = System::Drawing::Point(153, 114);
+			this->Armed_Label->Location = System::Drawing::Point(154, 99);
 			this->Armed_Label->Name = L"Armed_Label";
 			this->Armed_Label->Size = System::Drawing::Size(640, 73);
 			this->Armed_Label->TabIndex = 4;
@@ -101,16 +106,33 @@ namespace CppWinForm1 {
 			this->Armed_Label->TextAlign = System::Drawing::ContentAlignment::MiddleCenter;
 			this->Armed_Label->Click += gcnew System::EventHandler(this, &MyForm::Armed_Label_Click);
 			// 
+			// hint_label
+			// 
+			this->hint_label->Anchor = System::Windows::Forms::AnchorStyles::Top;
+			this->hint_label->AutoSize = true;
+			this->hint_label->Font = (gcnew System::Drawing::Font(L"Microsoft Sans Serif", 15.75F, System::Drawing::FontStyle::Bold, System::Drawing::GraphicsUnit::Point,
+				static_cast<System::Byte>(0)));
+			this->hint_label->ForeColor = System::Drawing::Color::Red;
+			this->hint_label->Location = System::Drawing::Point(241, 197);
+			this->hint_label->Name = L"hint_label";
+			this->hint_label->Size = System::Drawing::Size(418, 25);
+			this->hint_label->TabIndex = 5;
+			this->hint_label->Text = L"                                                          ";
+			this->hint_label->TextAlign = System::Drawing::ContentAlignment::MiddleCenter;
+			// 
 			// MyForm
 			// 
+			this->AcceptButton = this->button1;
 			this->AutoScaleDimensions = System::Drawing::SizeF(6, 13);
 			this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
 			this->ClientSize = System::Drawing::Size(868, 442);
+			this->Controls->Add(this->hint_label);
 			this->Controls->Add(this->Armed_Label);
 			this->Controls->Add(this->button1);
 			this->Controls->Add(this->tbCode);
 			this->Name = L"MyForm";
 			this->Text = L"System Access";
+			this->Load += gcnew System::EventHandler(this, &MyForm::MyForm_Load);
 			this->ResumeLayout(false);
 			this->PerformLayout();
 
@@ -125,17 +147,48 @@ namespace CppWinForm1 {
 		
 		if(!String::Compare(tbCode->Text, L"1234"))
 		{
+			attemptNumber = 0;
+
 			Armed_Label->Text = L"ACCESS GRANTED";
+			hint_label->Text = L" ";
 			Armed_Label->ForeColor = System::Drawing::Color::Green;
 			PlaySound(TEXT("access-granted.wav"), NULL, SND_FILENAME | SND_ASYNC);
-			dmx.setBlue();
+			dmx.setChannels(0, 0, 0, 0, 0, 0, 0xff, 0, 0);
+			dmx.setChannels(1, 0, 0, 0, 0, 0, 0xff, 0, 0);
+			dmx.send();
 		}
 		else
 		{
+			attemptNumber++;
 			Armed_Label->Text = L"SYSTEM SECURED";
+			if (attemptNumber >= 3)
+			{
+				hint_label->Text = L"HINT: Music Digits + Month Letters";
+			}
 			Armed_Label->ForeColor = System::Drawing::Color::Red;
 			PlaySound(TEXT("access-denied.wav"), NULL, SND_FILENAME | SND_ASYNC);
-			dmx.setRed();
+			dmx.setChannels(0,0xff, 0xff,0xff,0xff,0xff,0,0,0);
+			dmx.setChannels(1, 0xff, 0xff, 0xff, 0xff, 0xff, 0, 0, 0);
+			dmx.send();
+			Sleep(200);
+			dmx.setChannels(0, 0xff, 0, 0, 0, 0, 0, 0, 0);
+			dmx.setChannels(1, 0xff, 0, 0, 0, 0, 0, 0, 0);
+			dmx.send();
+			Sleep(200);
+			dmx.setChannels(0, 0xff, 0xff, 0xff, 0xff, 0xff, 0, 0, 0);
+			dmx.setChannels(1, 0xff, 0xff, 0xff, 0xff, 0xff, 0, 0, 0);
+			dmx.send();
+			Sleep(200);
+			dmx.setChannels(0, 0xff, 0, 0, 0, 0, 0, 0, 0);
+			dmx.setChannels(1, 0xff, 0, 0, 0, 0, 0, 0, 0);
+			dmx.send();
+			Sleep(200);
+			dmx.setChannels(0, 0xff, 0xff, 0xff, 0xff, 0xff, 0, 0, 0);
+			dmx.setChannels(1, 0xff, 0xff, 0xff, 0xff, 0xff, 0, 0, 0);
+			dmx.send();
+			dmx.setChannels(0, 0xff, 0, 0, 0, 0, 0, 0, 0);
+			dmx.setChannels(1, 0, 0xff, 0, 0, 0, 0, 0, 0);
+			dmx.send();
 		}
 	}
 	private: System::Void button2_Click(System::Object^  sender, System::EventArgs^  e) {
@@ -157,6 +210,12 @@ namespace CppWinForm1 {
 		dmx.setRed();
 	}
 private: System::Void Armed_Label_Click(System::Object^  sender, System::EventArgs^  e) {
+}
+private: System::Void MyForm_Load(System::Object^  sender, System::EventArgs^  e) {
+}
+private: System::Void tbCode_KeyDown(System::Object^  sender, System::Windows::Forms::KeyEventArgs^  e) {
+
+
 }
 };
 }

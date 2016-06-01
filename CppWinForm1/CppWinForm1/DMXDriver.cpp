@@ -14,6 +14,7 @@ DMXDriver::DMXDriver()
 	Num_Devices = 0;
 	device_connected = 0;
 	uint32_t length = DMX_DATA_LENGTH;
+	myDmx = gcnew array<unsigned char>(DMX_DATA_LENGTH);
 }
 
 int DMXDriver::FTDI_connect()
@@ -64,12 +65,12 @@ int DMXDriver::getDeviceConnected()
 void DMXDriver::setPurple()
 {
 	BOOL res = 0;
-	unsigned char myDmx[DMX_DATA_LENGTH];
+	//unsigned char myDmx[DMX_DATA_LENGTH];
 	//unsigned char myDmx[512];
 	//printf("\n Press Enter to Send DMX data :");
 	//_getch();
 	// Looping to Send DMX data
-	memset(myDmx, 0x00, DMX_DATA_LENGTH);
+	//memset(myDmx, 0x00, DMX_DATA_LENGTH);
 
 	myDmx[0] = 0xff;
 	myDmx[1] = 0x00;
@@ -80,25 +81,39 @@ void DMXDriver::setPurple()
 	myDmx[6] = 0x00;
 	myDmx[7] = 0x00;
 	myDmx[8] = 0x00;
-	// actual send function called 
-	res = FTDI_SendData(SET_DMX_TX_MODE, myDmx, DMX_DATA_LENGTH);
-	// check response from Send function
-	if (res < 0)
-	{
-		printf("FAILED: Sending DMX to PRO \n");
-		FTDI_ClosePort();
-	}
+}
+
+void DMXDriver::setUV()
+{
+	BOOL res = 0;
+	//unsigned char myDmx[DMX_DATA_LENGTH];
+	//unsigned char myDmx[512];
+	//printf("\n Press Enter to Send DMX data :");
+	//_getch();
+	// Looping to Send DMX data
+	//memset(myDmx, 0x00, DMX_DATA_LENGTH);
+
+	myDmx[0] = 0x00;
+	myDmx[1] = 0x00;
+	myDmx[2] = 0x00;
+	myDmx[3] = 0x00;
+	myDmx[4] = 0x00;
+	myDmx[5] = 0xFF;
+	myDmx[6] = 0x00;
+	myDmx[7] = 0x00;
+	myDmx[8] = 0x00;
+
 }
 
 void DMXDriver::setBlue()
 {
 	BOOL res = 0;
-	unsigned char myDmx[DMX_DATA_LENGTH];
+	//unsigned char myDmx[DMX_DATA_LENGTH];
 	//unsigned char myDmx[512];
 	//printf("\n Press Enter to Send DMX data :");
 	//_getch();
 	// Looping to Send DMX data
-	memset(myDmx, 0x00, DMX_DATA_LENGTH);
+	//memset(myDmx, 0x00, DMX_DATA_LENGTH);
 
 	myDmx[0] = 0x00;
 	myDmx[1] = 0x00;
@@ -109,26 +124,31 @@ void DMXDriver::setBlue()
 	myDmx[6] = 0x00;
 	myDmx[7] = 0x00;
 	myDmx[8] = 0x00;
-	// actual send function called 
-	res = FTDI_SendData(SET_DMX_TX_MODE, myDmx, DMX_DATA_LENGTH);
-	// check response from Send function
-	if (res < 0)
-	{
-		printf("FAILED: Sending DMX to PRO \n");
-		FTDI_ClosePort();
-	}
 }
 
-void DMXDriver::setRed()
+void DMXDriver::setChannels(int offset, int ch1, int ch2, int ch3, int ch4, int ch5, int ch6, int ch7, int ch8)
 {
 	BOOL res = 0;
-	unsigned char myDmx[DMX_DATA_LENGTH];
+	//unsigned char myDmx[DMX_DATA_LENGTH];
 	//unsigned char myDmx[512];
 	//printf("\n Press Enter to Send DMX data :");
 	//_getch();
 	// Looping to Send DMX data
-	memset(myDmx, 0x00, DMX_DATA_LENGTH);
+	//memset(myDmx, 0x00, DMX_DATA_LENGTH);
+	int addr = offset * 8;
+	myDmx[addr]   = ch1;
+	myDmx[++addr] = ch2;
+	myDmx[++addr] = ch3;
+	myDmx[++addr] = ch4;
+	myDmx[++addr] = ch5;
+	myDmx[++addr] = ch6;
+	myDmx[++addr] = ch7;
+	myDmx[++addr] = ch8;
 
+}
+
+void DMXDriver::setRed()
+{
 	myDmx[0] = 0xFF;
 	myDmx[1] = 0x00;
 	myDmx[2] = 0x00;
@@ -138,8 +158,15 @@ void DMXDriver::setRed()
 	myDmx[6] = 0x00;
 	myDmx[7] = 0x00;
 	myDmx[8] = 0x00;
-	// actual send function called 
-	res = FTDI_SendData(SET_DMX_TX_MODE, myDmx, DMX_DATA_LENGTH);
+}
+
+// actual send function called 
+void DMXDriver::send()
+{
+	BOOL res = 0;
+	cli::pin_ptr<System::Byte> myDmxPtr = &myDmx[0];
+	unsigned char* myDmxStd = myDmxPtr;
+	res = FTDI_SendData(SET_DMX_TX_MODE, myDmxStd, DMX_DATA_LENGTH);
 	// check response from Send function
 	if (res < 0)
 	{
